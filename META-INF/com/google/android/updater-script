@@ -1,52 +1,15 @@
-#format partitions
-ui_print("formatting /boot");
-format("yaffs2", "MTD", "boot");
+ui_print("superwipe+");
 
+#umount partitions
+ui_print("umount partitions+");
 ifelse((is_mounted("/cache")), (ui_print("unmounting /cache");run_program("/sbin/busybox", "umount", "/cache");));
-ui_print("formatting /cache");
-format("yaffs2", "MTD", "cache");
-
 ifelse((is_mounted("/system")), (ui_print("unmounting /system");run_program("/sbin/busybox", "umount", "/system");));
-ui_print("formatting /system");
-format("yaffs2", "MTD", "system");
-
 ifelse((is_mounted("/data")), (ui_print("unmounting /data");run_program("/sbin/busybox", "umount", "/data");));
-ui_print("formatting /userdata");
-format("yaffs2", "MTD", "userdata");
-#format partitions (end)
+ifelse((is_mounted("/sd-ext")), (ui_print("unmounting /sd-ext");run_program("/sbin/busybox", "umount", "/sd-ext");));
+ui_print("umount partitions-");
+#umount partitions (end)
 
-#rm -rf /sd-ext
-ui_print("clearing /sd-ext");
-run_program("/sbin/busybox", "mount", "-t", "auto", "/dev/block/mmcblk0p2", "/sd-ext");
-run_program("/sbin/busybox", "rm", "-rf", "/sd-ext/*");
-run_program("/sbin/busybox", "umount", "/sd-ext");
-
-ui_print("enabling writeback");
-run_program("/sbin/tune2fs", "-o", "journal_data_writeback", "/dev/block/mmcblk0p2");
-
-ui_print("disabling journaling");
-run_program("/sbin/tune2fs", "-O", "^has_journal", "/dev/block/mmcblk0p2");
-
-ui_print("checking /sd-ext");
-run_program("/sbin/e2fsck", "-fp", "/dev/block/mmcblk0p2");
-#rm -rf /sd-ext (end)
-
-#cleanup /sdcard
-ui_print("cleaning up /sdcard");
-delete_recursive("/sdcard/.android_secure");
-delete_recursive("/sdcard/.bookmark_thumb1");
-delete_recursive("/sdcard/.data/footprints");
-delete_recursive("/sdcard/.data/mail");
-delete_recursive("/sdcard/.data/navigator/Data/Temporary");
-delete_recursive("/sdcard/Android/data/com.android.providers.media");
-delete_recursive("/sdcard/Android/data/com.google.android.apps.genie.geniewidget.news-content-cache");
-delete_recursive("/sdcard/Android/data/com.google.android.apps.maps");
-delete_recursive("/sdcard/LazyList");
-delete_recursive("/sdcard/LOST.DIR");
-#cleanup /sdcard (end)
-
-#recover nand
-ui_print("starting nand_recovery");
+ui_print("nand_recovery+");
 package_extract_file("flash_erase", "/tmp/flash_erase");
 set_perm(0, 0, 0777, "/tmp/flash_erase");
 ui_print("recovering /boot");
@@ -57,7 +20,17 @@ ui_print("recovering /cache");
 run_program("/tmp/flash_erase", "-N", "/dev/mtd/mtd4", "0", "0");
 ui_print("recovering /data");
 run_program("/tmp/flash_erase", "-N", "/dev/mtd/mtd5", "0", "0");
-ui_print("nand_recovery done!");
-#recover nand (end)
+ui_print("nand_recovery-");
 
-ui_print("all done!");
+ui_print("sd-ext+");
+ui_print("fmt ext4");
+run_program("/sbin/mke2fs", "-T", "ext4", "/dev/block/mmcblk0p2");
+
+ui_print("enabling writeback");
+run_program("/sbin/tune2fs", "-o", "journal_data_writeback", "/dev/block/mmcblk0p2");
+
+ui_print("disabling journaling");
+run_program("/sbin/tune2fs", "-O", "^has_journal", "/dev/block/mmcblk0p2");
+ui_print("sd-ext-");
+
+ui_print("superwipe-");
