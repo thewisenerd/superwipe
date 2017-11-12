@@ -37,12 +37,16 @@ do_shell $FE "-N" "/dev/mtd/mtd5" "0" "0"
 ui_print "nand_recovery-"
 
 ui_print "sd-ext+"
-ui_print "fmt ext4"
-do_shell "mke2fs" "-T" "ext4" "/dev/block/mmcblk0p2"
+if do_shell "ls" "/dev/block" | grep --quiet mmcblk0p2 ; then
+	ui_print "fmt ext4"
+	do_shell "/sbin/mke2fs" "-T" "ext4" "/dev/block/mmcblk0p2"
 
-ui_print "enable writeback"
-do_shell "/sbin/tune2fs" "-o" "journal_data_writeback" "/dev/block/mmcblk0p2"
+	ui_print "enable writeback"
+	do_shell "/sbin/tune2fs" "-o" "journal_data_writeback" "/dev/block/mmcblk0p2"
 
-ui_print "disable journaling"
-do_shell "/sbin/tune2fs" "-O" "^has_journal" "/dev/block/mmcblk0p2"
+	ui_print "disable journaling"
+	do_shell "/sbin/tune2fs" "-O" "^has_journal" "/dev/block/mmcblk0p2"
+else
+	ui_print "no sd-ext"
+fi
 ui_print "sd-ext-"
